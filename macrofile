@@ -1,0 +1,4 @@
+action hello [
+	inp "Hello world!"
+]
+~hello
