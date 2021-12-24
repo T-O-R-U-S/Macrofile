@@ -90,13 +90,16 @@ pub fn interpret(input: Vec<Token>) {
                 std::thread::sleep(time)
             }
             "loop" => match input.next().unwrap() {
-                Token::Scope(scope) => {}
+                Token::Scope(scope) => loop {
+                    interpret(scope.clone());
+                    std::thread::sleep(std::time::Duration::from_millis(20))
+                },
                 Token::Int(num) => {
                     let scope = match input.next().unwrap() {
                         Token::Scope(scope) => scope,
                         any => panic!("Err unexpected tok: {:?}", any),
                     };
-                    for i in 0..(num as i32) {
+                    for _ in 0..(num as i32) {
                         interpret(scope.clone())
                     }
                 }

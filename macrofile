@@ -1,13 +1,3 @@
-# defines an action (a function)
-action mvfwd [
-	# kdn = Key down
-	kdn w
-	# wait just makes the thing wait for a bit (1 second)
-	wait 1
-	# kup = Key up (raises the W key)
-	kup w
+loop [
+	inp "Infinite loop!"
 ]
-
-~mvfwd
-~mvfwd
-~mvfwd
