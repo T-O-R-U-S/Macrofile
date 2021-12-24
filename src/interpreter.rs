@@ -1,5 +1,5 @@
 use crate::tokenizer::Token;
-use std::collections::HashMap;
+use std::{collections::HashMap};
 use enigo::*;
 
 pub fn interpret(input: Vec<Token>) {
@@ -7,10 +7,11 @@ pub fn interpret(input: Vec<Token>) {
 
 	let mut actions: HashMap<String, Vec<Token>> = HashMap::new();
 
+	let mut variables: HashMap<String, Token> = HashMap::new();
+
 	let mut keyboard = enigo::Enigo::new();
 
 	while let Some(token) = input.next() {
-		println!("{:?}", token);
 		let action: bool;
 		let name = match token {
 			Token::Id(id) => {
@@ -19,8 +20,8 @@ pub fn interpret(input: Vec<Token>) {
 			},
 			Token::ActionTilde => {
 				action = true;
-				match input.next() {
-					Some(Token::Id(id)) => id,
+				match input.next().unwrap() {
+					Token::Id(id) => id,
 					any => panic!("Unexpected action: {:?}", any)
 				}
 			}
@@ -35,6 +36,8 @@ pub fn interpret(input: Vec<Token>) {
 			);
 			continue;
 		}
+
+		use crate::ascii_to_in::input_to_keycode;
 
 		match name.as_str() {
 			"inp" => {
@@ -55,6 +58,52 @@ pub fn interpret(input: Vec<Token>) {
 					any => panic!("Unexpected tok: {:?}", any)
 				};
 				actions.insert(name, scope);
+			}
+			"kdn" => {
+				let code = match input.next().unwrap() {
+					Token::Id(id) => id,
+					any => panic!("Err unexpected tok: {:?}", any)
+				};
+				keyboard.key_down(
+					input_to_keycode(code)
+				)
+			}
+			"kup" => {
+				let code = match input.next().unwrap() {
+					Token::Id(id) => id,
+					any => panic!("Err unexpected tok: {:?}", any)
+				};
+				keyboard.key_up(
+					input_to_keycode(code)
+				)
+			}
+			"kbd" => {
+				let code = match input.next().unwrap() {
+					Token::Id(id) => id,
+					any => panic!("Err unexpected tok: {:?}", any)
+				};
+				keyboard.key_click(
+					input_to_keycode(code)
+				)
+			}
+			"seq" => {
+				let code = match input.next().unwrap() {
+					Token::Str(str) => str,
+					any => panic!("Err unexpected tok: {:?}", any)
+				};
+				keyboard.key_sequence_parse(&code)
+			}
+			"wait" => {
+				let time = match input.next().unwrap() {
+						// Just realized that Token::Int is not an integer.
+						// I might be slightly stupid..?
+						Token::Int(int) => std::time::Duration::from_secs_f32(int),
+						any => panic!("Err unexpected tok: {:?}", any)
+				};
+				std::thread::sleep(time)
+			}
+			"loop" => {
+
 			}
 			unknown => panic!("Unknown function called: {:?}", unknown)
 		}

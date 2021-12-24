@@ -18,26 +18,27 @@ pub fn tokenize(input: String) -> Vec<Token> {
 				let mut str_out = String::from(chr);
 
 				while let Some(alpha) = input.peek() {
-					if alpha.is_alphanumeric() {
+					if alpha.is_alphanumeric() || *alpha == '-' {
 						str_out.push(input.next().unwrap())
 					} else {
-						out.push(Token::Id(str_out));
 						break;
 					}
 				}
+				out.push(Token::Id(str_out))
 			}
-			chr if chr.is_numeric() || chr == '.' => {
+			chr if chr.is_numeric() => {
 				let mut int_out = String::from(chr);
 
 				while let Some(int) = input.peek() {
 					if int.is_numeric() || *int == '.' {
 						int_out.push(input.next().unwrap())
 					} else {
-						out.push(Token::Int(int_out.parse::<f32>().unwrap()));
 						break;
 					}
 				}
+				out.push(Token::Int(int_out.parse::<f32>().unwrap()));
 			}
+			'#' => while Some('\n') != input.next() {}
 			'[' => {
 				let mut to_parse = String::new();
 				while let Some(chr) = input.next() {
@@ -49,7 +50,7 @@ pub fn tokenize(input: String) -> Vec<Token> {
 				out.push(Token::Scope(tokenize(to_parse)));
 			},
 			'~' => {
-				out.push(Token::ActionTilde)
+				out.push(Token::ActionTilde);
 			}
 			'"' => {
 				let mut text = String::new();

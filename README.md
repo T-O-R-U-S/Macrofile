@@ -1,0 +1,15 @@
+# The why
+
+I was unsatisfied with most macro software. Why? The GUI was too slow. Also I partially wanted to have fun.
+
+### Note: Due to the library I'm using, Wayland display server (on Linux) is unsupported :(
+
+# Inspiration
+
+I was playing a game composed of mindless grinding. It was fun, but it was so brainless that it could be automated. Problem is, I wasn't satisfied with most macro software (or AHK) so now I'm making my own thing
+
+# Usage
+
+### Functions
+
+`inp`
