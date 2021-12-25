@@ -1,6 +1,6 @@
 use crate::tokenizer::Token;
 use enigo::*;
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash, vec::IntoIter};
 
 pub fn interpret(input: Vec<Token>) {
     let mut input = input.into_iter();
@@ -37,8 +37,12 @@ pub fn interpret(input: Vec<Token>) {
 
         // Probably faster than a hashmap?
         match name.as_str() {
-            "inp" => match input.next().unwrap() {
+            "in" => match input.next().unwrap() {
                 Token::Str(input) => keyboard.key_sequence(&input),
+                any => panic!("Unexpected tok: {:?}", any),
+            },
+            "inp" => match input.next().unwrap() {
+                Token::Str(input) => keyboard.key_sequence_parse(&input),
                 any => panic!("Unexpected tok: {:?}", any),
             },
             "action" => {
@@ -55,6 +59,7 @@ pub fn interpret(input: Vec<Token>) {
             "kdn" => {
                 let code = match input.next().unwrap() {
                     Token::Id(id) => id,
+                    Token::VarToken => fetch_id(&mut input, &variables),
                     any => panic!("Err unexpected tok: {:?}", any),
                 };
                 keyboard.key_down(input_to_keycode(code))
@@ -62,6 +67,7 @@ pub fn interpret(input: Vec<Token>) {
             "kup" => {
                 let code = match input.next().unwrap() {
                     Token::Id(id) => id,
+                    Token::VarToken => fetch_id(&mut input, &variables),
                     any => panic!("Err unexpected tok: {:?}", any),
                 };
                 keyboard.key_up(input_to_keycode(code))
@@ -69,6 +75,7 @@ pub fn interpret(input: Vec<Token>) {
             "kbd" => {
                 let code = match input.next().unwrap() {
                     Token::Id(id) => id,
+                    Token::VarToken => fetch_id(&mut input, &variables),
                     any => panic!("Err unexpected tok: {:?}", any),
                 };
                 keyboard.key_click(input_to_keycode(code))
@@ -85,6 +92,15 @@ pub fn interpret(input: Vec<Token>) {
                     // Just realized that Token::Int is not an integer.
                     // I might be slightly stupid..?
                     Token::Int(int) => std::time::Duration::from_secs_f32(int),
+                    Token::VarToken => match input.next().unwrap() {
+                        Token::Id(id) => {
+                            std::time::Duration::from_secs_f32(match variables.get(&id).unwrap() {
+                                Token::Int(num) => *num,
+                                any => panic!("Err unexpected tok: {:?}", any),
+                            })
+                        }
+                        any => panic!("Err unexpected tok: {:?}", any),
+                    },
                     any => panic!("Err unexpected tok: {:?}", any),
                 };
                 std::thread::sleep(time)
@@ -103,9 +119,43 @@ pub fn interpret(input: Vec<Token>) {
                         interpret(scope.clone())
                     }
                 }
+                Token::VarToken => match input.next().unwrap() {
+                    Token::Id(id) => {
+                        let val = match variables.get(&id).unwrap() {
+                            Token::Int(num) => *num as i32,
+                            any => panic!("Err unexpected tok: {:?}", any),
+                        };
+
+                        let scope = match input.next().unwrap() {
+                            Token::Scope(scope) => scope,
+                            any => panic!("Err unexpected tok: {:?}", any),
+                        };
+
+                        for _ in 0..val {
+                            interpret(scope.clone())
+                        }
+                    }
+                    any => panic!("Err unexpected tok: {:?}", any),
+                },
+                any => panic!("Err unexpected tok: {:?}", any),
+            },
+            "v" => match input.next().unwrap() {
+                Token::Id(id) => {
+                    variables.insert(id, input.next().unwrap());
+                }
                 any => panic!("Err unexpected tok: {:?}", any),
             },
             unknown => panic!("Unknown function called: {:?}", unknown),
         }
+    }
+}
+
+fn fetch_id(iterator: &mut IntoIter<Token>, vars: &HashMap<String, Token>) -> String {
+    match iterator.next().unwrap() {
+        Token::Id(id) => match vars.get(&id).unwrap() {
+            Token::Id(id) => id.clone(),
+            any => panic!("Err unexpected tok: {:?}", any),
+        },
+        any => panic!("Err unexpected tok: {:?}", any),
     }
 }
